@@ -17,6 +17,8 @@ const SELECTION_TYPES = [
 ];
 
 const SMALL_SIZE = { width: 256, height: 256 };
+const API_ENDPOINT = "http://localhost:8000/api";
+const UPLOAD_API_ENDPOINT = `${API_ENDPOINT}/upload`;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -49,7 +51,29 @@ const UploadImage = () => {
   const [displaySize, setDisplaySize] = useState(SMALL_SIZE);
   const [orgSize, setOrgSize] = useState(displaySize);
   const [squareCardSize, setSquareCardSize] = useState(displaySize);
-  const [type, setType] = useState(SELECTION_TYPES[0]);
+  const [type, setType] = useState("");
+  const [message, setMessage] = useState(null);
+
+  async function uploadAPI() {
+    const response = await fetch(UPLOAD_API_ENDPOINT, {
+      method: "post",
+      body: JSON.stringify({
+        original_image: base64Image,
+        option: "OG",
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response.json();
+
+    // .then((response) => response.json)
+    // .then((data) => {
+    //   const { message, code } = data;
+    //   setMessage(message);
+    // });
+  }
 
   function setImageSize(imgSize) {
     const maxLength = Math.max(imgSize.width, imgSize.height);
@@ -84,6 +108,10 @@ const UploadImage = () => {
   useEffect(() => {
     if (base64Image) {
       setImageSize(orgSize);
+      uploadAPI().then((data) => {
+        const { message, code } = data;
+        setMessage(message);
+      });
     }
   }, [type]);
 
