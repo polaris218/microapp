@@ -8,6 +8,7 @@ import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import Select from "@material-ui/core/Select";
 import MenuItem from "@material-ui/core/MenuItem";
+import Snackbar from "@material-ui/core/Snackbar";
 
 const SELECTION_TYPES = [
   "Original",
@@ -16,9 +17,16 @@ const SELECTION_TYPES = [
   "All three",
 ];
 
+const OPTIONS = {
+  Original: "OG",
+  "Square of original size": "SQ",
+  Small: "SM",
+  "All three": "AL",
+};
+
 const SMALL_SIZE = { width: 256, height: 256 };
 const API_ENDPOINT = "http://localhost:8000/api";
-const UPLOAD_API_ENDPOINT = `${API_ENDPOINT}/upload`;
+const UPLOAD_API_ENDPOINT = `${API_ENDPOINT}/upload/`;
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -53,13 +61,18 @@ const UploadImage = () => {
   const [squareCardSize, setSquareCardSize] = useState(displaySize);
   const [type, setType] = useState("");
   const [message, setMessage] = useState(null);
+  const [snackOpen, setSnackOpen] = useState({
+    open: false,
+    vertical: "top",
+    horizontal: "right",
+  });
 
   async function uploadAPI() {
     const response = await fetch(UPLOAD_API_ENDPOINT, {
       method: "post",
       body: JSON.stringify({
         original_image: base64Image,
-        option: "OG",
+        option: OPTIONS[type],
       }),
       headers: {
         "Content-Type": "application/json",
@@ -67,12 +80,6 @@ const UploadImage = () => {
     });
 
     return response.json();
-
-    // .then((response) => response.json)
-    // .then((data) => {
-    //   const { message, code } = data;
-    //   setMessage(message);
-    // });
   }
 
   function setImageSize(imgSize) {
@@ -111,6 +118,7 @@ const UploadImage = () => {
       uploadAPI().then((data) => {
         const { message, code } = data;
         setMessage(message);
+        setSnackOpen({ ...snackOpen, open: true });
       });
     }
   }, [type]);
@@ -128,6 +136,10 @@ const UploadImage = () => {
       };
       reader.readAsDataURL(event.currentTarget.files[0]);
     }
+  };
+
+  const handleSnackClose = () => {
+    setSnackOpen({ ...snackOpen, open: false });
   };
 
   return (
@@ -168,6 +180,13 @@ const UploadImage = () => {
           ))
         )}
       </label>
+      {snackOpen.open && (
+        <SnackAlert
+          {...snackOpen}
+          onClose={handleSnackClose}
+          message={message}
+        />
+      )}
     </div>
   );
 };
@@ -212,5 +231,23 @@ export const DisplayTypeSelection = ({ onSetType, type }) => {
         ))}
       </Select>
     </FormControl>
+  );
+};
+
+export const SnackAlert = ({
+  vertical,
+  horizontal,
+  message,
+  open,
+  onClose,
+}) => {
+  return (
+    <Snackbar
+      anchorOrigin={{ vertical, horizontal }}
+      open={open}
+      onClose={onClose}
+      message={message}
+      key={vertical + horizontal}
+    />
   );
 };
